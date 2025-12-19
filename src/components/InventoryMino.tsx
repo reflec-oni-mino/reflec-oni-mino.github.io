@@ -15,8 +15,7 @@ type InventoryMinoProp = {
     puzzle_data: PuzzleData,
     setPuzzleData: React.Dispatch<React.SetStateAction<PuzzleData>>,
     dragging_mino_index: number | undefined,
-    setDraggingMinoIndex: React.Dispatch<React.SetStateAction<number | undefined>>,
-    setSolved: React.Dispatch<React.SetStateAction<boolean>>
+    setDraggingMinoIndex: React.Dispatch<React.SetStateAction<number | undefined>>
 };
 
 const InventoryMino = ({ index, inventoryFrame, slotFrame, isLandscape, puzzle_data, setPuzzleData, setDraggingMinoIndex }: InventoryMinoProp): JSX.Element => {
@@ -55,7 +54,7 @@ const InventoryMino = ({ index, inventoryFrame, slotFrame, isLandscape, puzzle_d
                 fill={"#c2c8cc"}
                 closed={true}
                 stroke={"#414958"}
-                strokeWidth={3}
+                strokeWidth={4}
                 lineJoin={"round"}
             />
             <Cell data={picked_mino.cell[0]} color={undefined} rect_visible={true} />
