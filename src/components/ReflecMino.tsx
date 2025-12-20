@@ -82,14 +82,14 @@ const ReflecMino = (): JSX.Element => {
                 case "NormalMode":
                     text = [
                         `⬛🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
-                        `🟧⬜🟦 https://kota-yanagimachi.github.io/yv_reflecONImino/`,
+                        `🟧⬜🟦 https://reflec-oni-mino.github.io/`,
                         `⬛🟦⬛ Solved in ${document.getElementById("timer")?.textContent}`,
                     ].join("\n");
                     break;
                 case "HellMode":
                     text = [
                         `👿🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
-                        `🟧⬜🟦 https://kota-yanagimachi.github.io/yv_reflecONImino/`,
+                        `🟧⬜🟦 https://reflec-oni-mino.github.io/`,
                         `👿🟦👿 Solved in ${document.getElementById("timer")?.textContent}`,
                     ].join("\n")
                     break;

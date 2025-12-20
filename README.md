@@ -1,3 +1,3 @@
 [ReflecMino](https://yavu.github.io/yv_reflecmino/)
-[ReflecONIMino](https://kota-yanagimachi.github.io/yv_reflecONImino/)
+[ReflecONIMino](https://reflec-oni-mino.github.io/)
 Based on yv_reflecmino by yavu (MIT License)
