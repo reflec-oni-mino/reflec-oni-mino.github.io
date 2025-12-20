@@ -22,7 +22,7 @@ export function generate(mode: Mode,seed: number): PuzzleData {
 
     // 青のレーザーは０〜総枚数までのミラーを使う
     // 原作はnext_int(3, 7)だった
-    const mirror_random_count = rnd.next_int(0, mirrorCount + 1);
+    const mirror_random_count = rnd.next_int(mirrorCount / 2, mirrorCount + 1);
     const laser = [
         Object.assign({ mirror: mirror_random_count }, get_s(flame.indexOf("S"))),
         Object.assign({ mirror: mirrorCount - mirror_random_count }, get_s(flame.lastIndexOf("S"))),

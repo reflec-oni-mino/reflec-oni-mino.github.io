@@ -13,8 +13,8 @@ export const normal_difficulty_setting: DifficultySetting = {
     mirrorCount: 8
 };
 export const hell_difficulty_setting: DifficultySetting = {
-    minoCount: 8,
-    mirrorCount: 10
+    minoCount: 7,
+    mirrorCount: 13
 };
 
 export type Mode = "NormalMode" | "HellMode";
