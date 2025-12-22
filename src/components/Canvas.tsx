@@ -10,6 +10,9 @@ import StartPoint from "./StartPoint";
 import EndPoint from "./EndPoint";
 import Inventory from './Inventory';
 import { Frame } from './common';
+import usePickupMino from '../hooks/usePickupMino';
+import useDropMino from '../hooks/useDropMino';
+import useMoveMino from '../hooks/useMoveMino';
 
 type CanvasProp = {
     width: number,
@@ -45,7 +48,22 @@ const Canvas = ({ width, height, puzzle_data, setPuzzleData, draggingMinoIndex, 
             height: inventoryFrame.height
         })
     }
-
+    const baseScale = isLandscape ? 0.8 : 0.45;
+    const scaleModifier = Math.min(4 / puzzle_data[1].length, 1);
+    const scale = isLandscape ? {x: baseScale * scaleModifier, y: baseScale * scaleModifier} : {x: baseScale * scaleModifier, y: baseScale * scaleModifier};
+    const minoHomePositions = inventorySlotFrames.map((inventorySlotFrame, index) => ({
+        // (スロットの左上絶対座標) - (ミノ座標とミノ中心の差分) + (スロット座標とスロット中心との差分)
+        x:
+            (inventoryFrame.x + inventorySlotFrame.x)
+            - (puzzle_data[1][index].cell[0].x + puzzle_data[1][index].cell[1].x + puzzle_data[1][index].cell[2].x) * 25 * scale.x
+            + inventorySlotFrame.width / 2,
+    
+        y:
+            (inventoryFrame.y + inventorySlotFrame.y)
+            - (puzzle_data[1][index].cell[0].y + puzzle_data[1][index].cell[1].y + puzzle_data[1][index].cell[2].y) * 25 * scale.y
+            + inventorySlotFrame.height / 2,
+    }));
+    
     return (
         <Stage
             width={656}
@@ -94,14 +112,13 @@ const Canvas = ({ width, height, puzzle_data, setPuzzleData, draggingMinoIndex, 
                     ))}
                 </Group>
                 <Group visible={timer_enabled}>
-                    {inventorySlotFrames.map((slotFrame, i) => (
+                    {Array.from({ length: minoCount }).map((_, i) => (
                         <InventoryMino
                             key={`il${i}`}
                             index={i}
-                            inventoryFrame={inventoryFrame}
-                            slotFrame={slotFrame}
-                            isLandscape={isLandscape}
-                            puzzle_data={puzzle_data}
+                            mino={puzzle_data[1][i]}
+                            homePos={minoHomePositions[i]}
+                            scale={scale}
                             setPuzzleData={setPuzzleData}
                             draggingMinoIndex={draggingMinoIndex}
                         />
