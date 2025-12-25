@@ -25,12 +25,12 @@ const Canvas = ({ width, height, puzzle_data, setPuzzleData, setSolved, timer_en
 
     // ミノ数
     const minoCount = puzzle_data[1].length;
-    
+
     // PC利用か
     const isLandscape = width > height;
 
     // インベントリのFrame 　PC:スマホ
-    const inventoryFrame: Frame = isLandscape ? {x: -33, y: 303, width: 651.9, height: 150} : {x: -33, y: 296, width: 316, height: 79};
+    const inventoryFrame: Frame = isLandscape ? { x: -33, y: 303, width: 651.9, height: 150 } : { x: -33, y: 296, width: 316, height: 79 };
 
     // スロットのFrame配列
     const slotCount = minoCount >= 1 ? minoCount : 1;
@@ -43,11 +43,11 @@ const Canvas = ({ width, height, puzzle_data, setPuzzleData, setSolved, timer_en
         inventorySlotFrames.push({
             x: (slotWidth + margin) * i,
             y: 0,
-            width: slotWidth, 
+            width: slotWidth,
             height: inventoryFrame.height
         })
     }
-    
+
     useEffect(() => {
         const non_activated_cells = [...puzzle_data[0]].map((y, y_index) => y
             .map((e, x_index) => (
@@ -72,22 +72,25 @@ const Canvas = ({ width, height, puzzle_data, setPuzzleData, setSolved, timer_en
             <Layer
                 offset={{ x: -35, y: -35 }}
             >
-                <Board
-                    children={
-                        <Group visible={timer_enabled}
-                        >
-                            <StartPoint pos={puzzle_data[2][0].start} color={{ fill: "#14b3ff", stroke: "#0099ff" }} />
-                            <StartPoint pos={puzzle_data[2][1].start} color={{ fill: "#fe9f56", stroke: "#ff801e" }} />
-                            <EndPoint pos={puzzle_data[2][0].end} laser_data={puzzle_data[2]} />
-                            <EndPoint pos={puzzle_data[2][1].end} laser_data={puzzle_data[2]} />
-                        </Group>
-                    }
-                />
-                <Inventory
-                    x={inventoryFrame.x}
-                    y={inventoryFrame.y}
-                    slotFrames={inventorySlotFrames}
-                />
+                <Group listening={false}>
+                    <Board
+                        children={
+                            <Group visible={timer_enabled}
+                            >
+                                <StartPoint pos={puzzle_data[2][0].start} color={{ fill: "#14b3ff", stroke: "#0099ff" }} />
+                                <StartPoint pos={puzzle_data[2][1].start} color={{ fill: "#fe9f56", stroke: "#ff801e" }} />
+                                <EndPoint pos={puzzle_data[2][0].end} laser_data={puzzle_data[2]} />
+                                <EndPoint pos={puzzle_data[2][1].end} laser_data={puzzle_data[2]} />
+                            </Group>
+                        }
+                    />
+                    
+                    <Inventory
+                        x={inventoryFrame.x}
+                        y={inventoryFrame.y}
+                        slotFrames={inventorySlotFrames}
+                    />
+                </Group>
                 <Group visible={timer_enabled}>
                     {Array.from({ length: minoCount }).map((_, i) => (
                         <BoardMino
@@ -111,7 +114,7 @@ const Canvas = ({ width, height, puzzle_data, setPuzzleData, setSolved, timer_en
                             setDraggingMinoIndex={setDraggingMinoIndex}
                         />
                     ))}
-                    
+
                     {inventorySlotFrames.map((slotFrame, i) => (
                         <InventoryMino
                             key={`il${i}`}
