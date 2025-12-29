@@ -1,10 +1,14 @@
 import { compose_n, while_f, replace_2d_array } from "../utils/function";
 import { random } from "../utils/random"
-import { normal_difficulty_setting, hell_difficulty_setting, empty_board, mino_pattern } from "./const";
+import { normal_difficulty_setting, hell_difficulty_setting, empty_board, mino_pattern, new_year_2026 } from "./const";
 import { MinoData, PuzzleData, Mode } from "./const";
 import { simulate_laser } from "./simulate_laser";
 
 export function generate(mode: Mode, seed: number): PuzzleData {
+    // 2026年元日限定パズル
+    if (mode === "HellMode" && seed === 20260101) {
+        return new_year_2026;
+    }
     const minoCount = mode === "HellMode" ? hell_difficulty_setting.minoCount : normal_difficulty_setting.minoCount;
     const mirrorCount = mode === "HellMode" ? hell_difficulty_setting.mirrorCount : normal_difficulty_setting.mirrorCount;
 
