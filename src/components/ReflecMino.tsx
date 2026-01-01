@@ -26,7 +26,7 @@ import FlagIcon from '@mui/icons-material/Flag';
 import parse from 'date-fns/parse'
 import { is_invalid_date } from '../utils/function';
 import { decode } from '../puzzle/decode';
-import { SaveData } from './common';
+import { SaveData, formatMMSS } from './common';
 
 const query_params = Object.fromEntries(window.location.search.slice(1).split('&').map(e => e.split("=")));
 const initial_date = (() => {
@@ -63,7 +63,7 @@ const parseSaveData = (raw: string | undefined): SaveData | undefined => {
 const saveData: SaveData | undefined = parseSaveData(query_params.save_data);
 
 const ReflecMino = (): JSX.Element => {
-    
+
     const [puzzle_data, setPuzzleData] = useState<PuzzleData>(empty_puzzle_data);
     const [solved, setSolved] = useState<boolean>(false);
     const [size, setSize] = useState<{ x: number, y: number }>({ x: 100, y: 100 });
@@ -75,6 +75,19 @@ const ReflecMino = (): JSX.Element => {
     const [playing, setPlaying] = useState<boolean>(false);
     const [timer_enabled, setTimerEnabled] = useState<boolean>(false);
     const [how2play_visible, setHow2PlayVisible] = useState<boolean>(false);
+    const [time, setTime] = React.useState(0);
+
+    React.useEffect(() => {
+        if (timer_enabled && !solved) {
+            const id = setInterval(() => {
+                setTime(t => t < 5999 ? t + 1 : t);
+            }, 1000);
+            return () => clearInterval(id);
+        }
+        else if (!playing && !solved) {
+            setTime(0);
+        }
+    }, [timer_enabled, playing, solved]);
 
     const HandleDateChange = useCallback(
         (value: Date | null) => {
@@ -115,14 +128,14 @@ const ReflecMino = (): JSX.Element => {
                     text = [
                         `⬛🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
                         `🟧⬜🟦 https://reflec-oni-mino.github.io/${playDateParam}`,
-                        `⬛🟦⬛ Solved in ${document.getElementById("timer")?.textContent}`,
+                        `⬛🟦⬛ Solved in ${formatMMSS(time)}`,
                     ].join("\n");
                     break;
                 case "HellMode":
                     text = [
                         `👿🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
                         `🟧⬜🟦 https://reflec-oni-mino.github.io/${playDateParam}`,
-                        `👿🟦👿 Solved in ${document.getElementById("timer")?.textContent}`,
+                        `👿🟦👿 Solved in ${formatMMSS(time)}`,
                     ].join("\n")
                     break;
             }
@@ -136,26 +149,26 @@ const ReflecMino = (): JSX.Element => {
                 }, function (err) {
                     console.error("Async: Could not copy text: ", err);
                 });
-        }, [date, playMode]
+        }, [date, playMode, time]
     );
     const copy_resign_result_to_clipboard = useCallback(
         () => {
             let text;
-            const playDateParam = "?date=" + format(date, "yyyyMMdd");
-            const saveDataParam = "?save_data" + (playMode === "NormalMode" ? "n" : "h") + format(date, "yyyyMMdd")
+            const playDateParam = "date=" + format(date, "yyyyMMdd");
+            const saveDataParam = "save_data=" + (playMode === "NormalMode" ? "n" : "h") + format(date, "yyyyMMdd") + time.toString().padStart(4, "0")
             switch (playMode) {
                 case "NormalMode":
                     text = [
                         `⬛🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
-                        `🟧⬜🟦 https://reflec-oni-mino.github.io/${playDateParam}`,
-                        `⬛🟦⬛ Resigned at ${document.getElementById("timer")?.textContent}🏳️`,
+                        `🟧⬜🟦 https://reflec-oni-mino.github.io/?${playDateParam}&${saveDataParam}`,
+                        `⬛🟦⬛ Resigned at ${formatMMSS(time)}🏳️`,
                     ].join("\n");
                     break;
                 case "HellMode":
                     text = [
                         `👿🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
-                        `🟧⬜🟦 https://reflec-oni-mino.github.io/${playDateParam}`,
-                        `👿🟦👿 Resigned at ${document.getElementById("timer")?.textContent}🏳️`,
+                        `🟧⬜🟦 https://reflec-oni-mino.github.io/?${playDateParam}&${saveDataParam}`,
+                        `👿🟦👿 Resigned at ${formatMMSS(time)}🏳️`,
                     ].join("\n")
                     break;
             }
@@ -169,7 +182,7 @@ const ReflecMino = (): JSX.Element => {
                 }, function (err) {
                     console.error("Async: Could not copy text: ", err);
                 });
-        }, [date, playMode]
+        }, [date, playMode, time]
     );
     const hellCountRef = useRef(0);
     const add_hell_mode_count = () => {
@@ -238,6 +251,7 @@ const ReflecMino = (): JSX.Element => {
                         ? custom_puzzle_data
                         : generate(saveData.mode, Number(saveData.date))
                 );
+                setTime(saveData.time);
                 setPlaying(true);
                 setTimerEnabled(true);
                 setIsGenerating(false);
@@ -392,10 +406,9 @@ const ReflecMino = (): JSX.Element => {
                                 alignItems={"center"}
                             >
                                 <Timer
-                                    enabled={timer_enabled && !solved}
+                                    time={time}
                                     theme={theme}
                                     solved={solved}
-                                    playing={playing}
                                 />
                                 <Fab
                                     variant={"extended"}
@@ -692,10 +705,10 @@ const ReflecMino = (): JSX.Element => {
 
                                             '@keyframes oniColorPulse': {
                                                 '0%, 100%': {
-                                                    color: '#ff4c4cff', // 薄い赤
+                                                    color: '#ff4c4cff',
                                                 },
                                                 '50%': {
-                                                    color: '#ff0000ff', // 濃い赤
+                                                    color: '#ff0000ff',
                                                 },
                                             },
                                         }}

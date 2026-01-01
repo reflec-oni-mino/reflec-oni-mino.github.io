@@ -1,32 +1,14 @@
 import { Theme, Typography } from '@mui/material';
 import React from 'react';
+import { formatMMSS } from './common';
 
 type TimerProp = {
-    enabled: boolean,
+    time: number,
     theme: Theme,
-    solved: boolean,
-    playing: boolean
+    solved: boolean
 }
 
-const Timer = ({ enabled, theme, solved, playing }: TimerProp): JSX.Element => {
-
-    const [time, setTime] = React.useState(0);
-
-    React.useEffect(() => {
-        if (enabled) {
-            const id = setInterval(() => {
-                setTime(t => t < 5999 ? t + 1 : t);
-            }, 1000);
-            return () => clearInterval(id);
-        }
-        else if (!playing && !solved) {
-            setTime(0);
-        }
-    }, [enabled, playing, solved]);
-
-    const m = Math.floor(time / 60);
-    const s = time % 60;
-
+const Timer = ({ time, theme, solved }: TimerProp): JSX.Element => {
     return (
         <Typography
             id={"timer"}
@@ -47,7 +29,7 @@ const Timer = ({ enabled, theme, solved, playing }: TimerProp): JSX.Element => {
                 }
             }}
         >
-            {m < 10 ? "0" : ""}{m}:{s < 10 ? "0" : ""}{s}
+            {formatMMSS(time)}
         </Typography>
     );
 };
