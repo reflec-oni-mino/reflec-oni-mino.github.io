@@ -264,8 +264,9 @@ const ReflecMino = (): JSX.Element => {
                 setPuzzleData(
                     custom_puzzle_data
                         ? custom_puzzle_data
-                        : generate(saveData.mode, Number(saveData.date))
+                        : generate(saveData.mode, Number(format(saveData.date, "yyyyMMdd")))
                 );
+                console.log(saveData);
                 setPlaying(true);
                 setTimerEnabled(true);
                 setIsGenerating(false);
