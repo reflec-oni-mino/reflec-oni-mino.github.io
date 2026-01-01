@@ -22,6 +22,7 @@ import ShareIcon from '@mui/icons-material/Share'
 import HomeIcon from '@mui/icons-material/Home'
 import DoneIcon from '@mui/icons-material/Done'
 import RandomDateIcon from '@mui/icons-material/History'
+import FlagIcon from '@mui/icons-material/Flag';
 import parse from 'date-fns/parse'
 import { is_invalid_date } from '../utils/function';
 import { decode } from '../puzzle/decode';
@@ -75,7 +76,7 @@ const ReflecMino = (): JSX.Element => {
     const [playMode, setPlayMode] = useState<Mode>("NormalMode");
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
     const [copied_snackbar_visible, setCopiedSnackbarVisible] = useState<boolean>(false);
-    const copy_result_to_clipboard = useCallback(
+    const copy_solve_result_to_clipboard = useCallback(
         () => {
             let text;
             switch (playMode) {
@@ -91,6 +92,37 @@ const ReflecMino = (): JSX.Element => {
                         `👿🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
                         `🟧⬜🟦 https://reflec-oni-mino.github.io/`,
                         `👿🟦👿 Solved in ${document.getElementById("timer")?.textContent}`,
+                    ].join("\n")
+                    break;
+            }
+            navigator.clipboard.writeText(text)
+                .then(function () {
+                    setCopiedSnackbarVisible(true);
+                    window.setTimeout(() => {
+                        setCopiedSnackbarVisible(false);
+                    }, 2000);
+                    console.log("Async: Copying to clipboard was successful");
+                }, function (err) {
+                    console.error("Async: Could not copy text: ", err);
+                });
+        }, [date, playMode]
+    );
+    const copy_resign_result_to_clipboard = useCallback(
+        () => {
+            let text;
+            switch (playMode) {
+                case "NormalMode":
+                    text = [
+                        `⬛🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
+                        `🟧⬜🟦 https://reflec-oni-mino.github.io/`,
+                        `⬛🟦⬛ Resigned at ${document.getElementById("timer")?.textContent}🏳️`,
+                    ].join("\n");
+                    break;
+                case "HellMode":
+                    text = [
+                        `👿🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
+                        `🟧⬜🟦 https://reflec-oni-mino.github.io/`,
+                        `👿🟦👿 Resigned at ${document.getElementById("timer")?.textContent}🏳️`,
                     ].join("\n")
                     break;
             }
@@ -213,29 +245,54 @@ const ReflecMino = (): JSX.Element => {
                         alignItems={"flex-end"}
                         alignContent={"center"}
                     >
-                        <Typography
-                            zIndex={"1"}
-                            variant={"h4"}
-                            color={"#ffffff"}
-                            textAlign={"center"}
-                            display={timer_enabled ? "none" : "block"}
-                            height={"46px"}
-                            width={"146px"}
-                            paddingTop={"4px"}
-                            marginTop={"153.4px"}
-                            marginRight={"439px"}
-                            borderRadius={"2px"}
-                            position={"absolute"}
+                        <Paper
+                            elevation={0}
                             sx={{
+                                zIndex: 1,
+                                position: "absolute",
+                                height: "146px",
+                                width: "146px",
+                                borderRadius: "2px",
                                 backgroundColor: "#32373f",
+                                marginTop: "103.4px",
+                                marginRight: "439px",
+                                display: timer_enabled ? "none" : "flex",
                                 "@media screen and (max-width:704px)": {
-                                    marginTop: "425.2px",
-                                    marginRight: "103px"
-                                }
+                                    marginTop: "375.2px",
+                                    marginRight: "103px",
+                                },
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "space-evenly"
                             }}
                         >
-                            Pause
-                        </Typography>
+                            <Typography
+                                variant="h4"
+                                color="#ffffff"
+                                textAlign="center"
+                            >
+                                Pause
+                            </Typography>
+                            <Button
+                                variant={"outlined"}
+                                size={"large"}
+                                sx={{
+                                    width: theme.spacing(7),
+                                    color: "#ffffff",
+                                    borderColor: "#ffffff",
+                                    "@media screen and (max-width:704px)": {
+                                        width: theme.spacing(7)
+                                    },
+                                    "&:hover": {
+                                        color: "#40c0ff",
+                                    }
+                                }}
+                                onClick={copy_resign_result_to_clipboard}
+                                endIcon={<FlagIcon />}
+                            >
+                                Resign
+                            </Button>
+                        </Paper>
                         <Paper
                             elevation={5}
                             sx={{
@@ -736,7 +793,7 @@ const ReflecMino = (): JSX.Element => {
                                             color: "#40c0ff",
                                         }
                                     }}
-                                    onClick={copy_result_to_clipboard}
+                                    onClick={copy_solve_result_to_clipboard}
                                     endIcon={<ShareIcon />}
                                 >
                                     Share
