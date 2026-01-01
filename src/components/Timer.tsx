@@ -1,14 +1,19 @@
 import { Theme, Typography } from '@mui/material';
-import React from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { formatMMSS } from './common';
 
 type TimerProp = {
-    time: number,
+    subscribe: (listener: () => void) => () => void,
+    getSnapshot: () => number,
     theme: Theme,
     solved: boolean
 }
 
-const Timer = ({ time, theme, solved }: TimerProp): JSX.Element => {
+const Timer = ({ subscribe, getSnapshot, theme, solved }: TimerProp): JSX.Element => {
+    const time = useSyncExternalStore(
+        subscribe,
+        getSnapshot
+      );
     return (
         <Typography
             id={"timer"}

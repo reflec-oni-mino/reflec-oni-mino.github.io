@@ -75,19 +75,32 @@ const ReflecMino = (): JSX.Element => {
     const [playing, setPlaying] = useState<boolean>(false);
     const [timer_enabled, setTimerEnabled] = useState<boolean>(false);
     const [how2play_visible, setHow2PlayVisible] = useState<boolean>(false);
-    const [time, setTime] = React.useState(0);
 
-    React.useEffect(() => {
+    const timeRef = useRef(0);
+
+    const listenersRef = useRef(new Set<() => void>());
+    const subscribe = useCallback((listener: () => void) => {
+        listenersRef.current.add(listener);
+        return () => listenersRef.current.delete(listener);
+    },[])
+    const getSnapshot = useCallback(() => timeRef.current, []);
+
+    useEffect(() => {
         if (timer_enabled && !solved) {
-            const id = setInterval(() => {
-                setTime(t => t < 5999 ? t + 1 : t);
+            const id = window.setInterval(() => {
+                if (timeRef.current < 5999) timeRef.current += 1;
+                listenersRef.current.forEach(l => l());
             }, 1000);
-            return () => clearInterval(id);
+
+            return () => window.clearInterval(id);
         }
-        else if (!playing && !solved) {
-            setTime(0);
+
+        if (!playing && !solved) {
+            timeRef.current = 0;
+            listenersRef.current.forEach(l => l());
         }
-    }, [timer_enabled, playing, solved]);
+    }, [timer_enabled, solved, playing]);
+
 
     const HandleDateChange = useCallback(
         (value: Date | null) => {
@@ -128,14 +141,14 @@ const ReflecMino = (): JSX.Element => {
                     text = [
                         `⬛🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
                         `🟧⬜🟦 https://reflec-oni-mino.github.io/${playDateParam}`,
-                        `⬛🟦⬛ Solved in ${formatMMSS(time)}`,
+                        `⬛🟦⬛ Solved in ${formatMMSS(timeRef.current)}`,
                     ].join("\n");
                     break;
                 case "HellMode":
                     text = [
                         `👿🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
                         `🟧⬜🟦 https://reflec-oni-mino.github.io/${playDateParam}`,
-                        `👿🟦👿 Solved in ${formatMMSS(time)}`,
+                        `👿🟦👿 Solved in ${formatMMSS(timeRef.current)}`,
                     ].join("\n")
                     break;
             }
@@ -149,26 +162,26 @@ const ReflecMino = (): JSX.Element => {
                 }, function (err) {
                     console.error("Async: Could not copy text: ", err);
                 });
-        }, [date, playMode, time]
+        }, [date, playMode, timeRef]
     );
     const copy_resign_result_to_clipboard = useCallback(
         () => {
             let text;
             const playDateParam = "date=" + format(date, "yyyyMMdd");
-            const saveDataParam = "save_data=" + (playMode === "NormalMode" ? "n" : "h") + format(date, "yyyyMMdd") + time.toString().padStart(4, "0")
+            const saveDataParam = "save_data=" + (playMode === "NormalMode" ? "n" : "h") + format(date, "yyyyMMdd") + timeRef.current.toString().padStart(4, "0")
             switch (playMode) {
                 case "NormalMode":
                     text = [
                         `⬛🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
                         `🟧⬜🟦 https://reflec-oni-mino.github.io/?${playDateParam}&${saveDataParam}`,
-                        `⬛🟦⬛ Resigned at ${formatMMSS(time)}🏳️`,
+                        `⬛🟦⬛ Resigned at ${formatMMSS(timeRef.current)}🏳️`,
                     ].join("\n");
                     break;
                 case "HellMode":
                     text = [
                         `👿🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
                         `🟧⬜🟦 https://reflec-oni-mino.github.io/?${playDateParam}&${saveDataParam}`,
-                        `👿🟦👿 Resigned at ${formatMMSS(time)}🏳️`,
+                        `👿🟦👿 Resigned at ${formatMMSS(timeRef.current)}🏳️`,
                     ].join("\n")
                     break;
             }
@@ -182,7 +195,7 @@ const ReflecMino = (): JSX.Element => {
                 }, function (err) {
                     console.error("Async: Could not copy text: ", err);
                 });
-        }, [date, playMode, time]
+        }, [date, playMode, timeRef]
     );
     const hellCountRef = useRef(0);
     const add_hell_mode_count = () => {
@@ -246,12 +259,13 @@ const ReflecMino = (): JSX.Element => {
             setIsGenerating(true);
             setPlayMode(saveData.mode);
             window.setTimeout(() => {
+                timeRef.current = saveData.time;
+                listenersRef.current.forEach(l => l());
                 setPuzzleData(
                     custom_puzzle_data
                         ? custom_puzzle_data
                         : generate(saveData.mode, Number(saveData.date))
                 );
-                setTime(saveData.time);
                 setPlaying(true);
                 setTimerEnabled(true);
                 setIsGenerating(false);
@@ -406,7 +420,8 @@ const ReflecMino = (): JSX.Element => {
                                 alignItems={"center"}
                             >
                                 <Timer
-                                    time={time}
+                                    subscribe={subscribe}
+                                    getSnapshot={getSnapshot}
                                     theme={theme}
                                     solved={solved}
                                 />
