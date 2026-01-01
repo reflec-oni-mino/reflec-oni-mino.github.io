@@ -15,7 +15,7 @@ import h2p3_img from '../images/how_to_play_3.png';
 import Timer from './Timer';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
-import { format, isAfter, isBefore } from 'date-fns';
+import { format, isAfter, isBefore, setDate } from 'date-fns';
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import ShareIcon from '@mui/icons-material/Share'
@@ -26,6 +26,7 @@ import FlagIcon from '@mui/icons-material/Flag';
 import parse from 'date-fns/parse'
 import { is_invalid_date } from '../utils/function';
 import { decode } from '../puzzle/decode';
+import { SaveData } from './common';
 
 const query_params = Object.fromEntries(window.location.search.slice(1).split('&').map(e => e.split("=")));
 const initial_date = (() => {
@@ -35,10 +36,46 @@ const initial_date = (() => {
         : parse_date;
 })();
 const custom_puzzle_data = decode(query_params.custom);
+const parseSaveData = (raw: string | undefined): SaveData | undefined => {
+    if (!raw || raw.length !== 13) return undefined;
+
+    const modeChar = raw[0];
+    const dateChar: string = raw.slice(1, 9);
+    const timeChar = raw.slice(9, 13);
+
+    const mode: Mode | undefined = modeChar === "h" ? "HellMode" : modeChar === "n" ? "NormalMode" : undefined
+    if (mode === undefined) return undefined
+
+    const dateNum = Number(dateChar)
+    if (Number.isNaN(dateNum)) return undefined
+    if (dateNum < 19000101 || Number(format(new Date(), "yyyyMMdd")) < dateNum) return undefined
+
+    const timeNum = Number(timeChar)
+    if (Number.isNaN(timeNum)) return undefined
+    if (timeNum < 0 || 5999 < timeNum) return undefined // 5999秒はタイマーの最大値である99:59
+
+    return {
+        mode: mode,
+        date: parse(dateChar, "yyyyMMdd", new Date),
+        time: timeNum
+    };
+};
+const saveData: SaveData | undefined = parseSaveData(query_params.save_data);
 
 const ReflecMino = (): JSX.Element => {
-
+    
+    const [puzzle_data, setPuzzleData] = useState<PuzzleData>(empty_puzzle_data);
+    const [solved, setSolved] = useState<boolean>(false);
+    const [size, setSize] = useState<{ x: number, y: number }>({ x: 100, y: 100 });
     const [date, setDate] = useState<Date>(initial_date);
+    const [playMode, setPlayMode] = useState<Mode>("NormalMode");
+    const [isGenerating, setIsGenerating] = useState<boolean>(false);
+    const [copied_snackbar_visible, setCopiedSnackbarVisible] = useState<boolean>(false);
+    const [oniFlash, setOniFlash] = useState<boolean>(false);
+    const [playing, setPlaying] = useState<boolean>(false);
+    const [timer_enabled, setTimerEnabled] = useState<boolean>(false);
+    const [how2play_visible, setHow2PlayVisible] = useState<boolean>(false);
+
     const HandleDateChange = useCallback(
         (value: Date | null) => {
             if (value !== null) {
@@ -60,10 +97,6 @@ const ReflecMino = (): JSX.Element => {
             setDate(random_date);
         }, []
     );
-    const [puzzle_data, setPuzzleData] = useState<PuzzleData>(empty_puzzle_data);
-    const [solved, setSolved] = useState<boolean>(false);
-
-    const [size, setSize] = useState<{ x: number, y: number }>({ x: 100, y: 100 });
     const onResize = useCallback(
         ({ bounds }: { bounds?: { width?: number, height?: number } }) => {
             setSize({
@@ -73,24 +106,22 @@ const ReflecMino = (): JSX.Element => {
         }, []
     );
 
-    const [playMode, setPlayMode] = useState<Mode>("NormalMode");
-    const [isGenerating, setIsGenerating] = useState<boolean>(false);
-    const [copied_snackbar_visible, setCopiedSnackbarVisible] = useState<boolean>(false);
     const copy_solve_result_to_clipboard = useCallback(
         () => {
             let text;
+            const playDateParam = format(date, "yyyyMMdd") === format(new Date(), "yyyyMMdd") ? "" : "?date=" + format(date, "yyyyMMdd");
             switch (playMode) {
                 case "NormalMode":
                     text = [
                         `⬛🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
-                        `🟧⬜🟦 https://reflec-oni-mino.github.io/${format(date, "yyyyMMdd") === format(new Date(), "yyyyMMdd") ? "" : "?date=" + format(date, "yyyyMMdd")}`,
+                        `🟧⬜🟦 https://reflec-oni-mino.github.io/${playDateParam}`,
                         `⬛🟦⬛ Solved in ${document.getElementById("timer")?.textContent}`,
                     ].join("\n");
                     break;
                 case "HellMode":
                     text = [
                         `👿🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
-                        `🟧⬜🟦 https://reflec-oni-mino.github.io/${format(date, "yyyyMMdd") === format(new Date(), "yyyyMMdd") ? "" : "?date=" + format(date, "yyyyMMdd")}`,
+                        `🟧⬜🟦 https://reflec-oni-mino.github.io/${playDateParam}`,
                         `👿🟦👿 Solved in ${document.getElementById("timer")?.textContent}`,
                     ].join("\n")
                     break;
@@ -110,18 +141,20 @@ const ReflecMino = (): JSX.Element => {
     const copy_resign_result_to_clipboard = useCallback(
         () => {
             let text;
+            const playDateParam = "?date=" + format(date, "yyyyMMdd");
+            const saveDataParam = "?save_data" + (playMode === "NormalMode" ? "n" : "h") + format(date, "yyyyMMdd")
             switch (playMode) {
                 case "NormalMode":
                     text = [
                         `⬛🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
-                        `🟧⬜🟦 https://reflec-oni-mino.github.io/${format(date, "yyyyMMdd") === format(new Date(), "yyyyMMdd") ? "" : "?date=" + format(date, "yyyyMMdd")}`,
+                        `🟧⬜🟦 https://reflec-oni-mino.github.io/${playDateParam}`,
                         `⬛🟦⬛ Resigned at ${document.getElementById("timer")?.textContent}🏳️`,
                     ].join("\n");
                     break;
                 case "HellMode":
                     text = [
                         `👿🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
-                        `🟧⬜🟦 https://reflec-oni-mino.github.io/${format(date, "yyyyMMdd") === format(new Date(), "yyyyMMdd") ? "" : "?date=" + format(date, "yyyyMMdd")}`,
+                        `🟧⬜🟦 https://reflec-oni-mino.github.io/${playDateParam}`,
                         `👿🟦👿 Resigned at ${document.getElementById("timer")?.textContent}🏳️`,
                     ].join("\n")
                     break;
@@ -139,19 +172,15 @@ const ReflecMino = (): JSX.Element => {
         }, [date, playMode]
     );
     const hellCountRef = useRef(0);
-    const [hellModeCount, setHellModeCount] = useState(0);
-    const [oniFlash, setOniFlash] = useState<boolean>(false);
     const add_hell_mode_count = () => {
         setOniFlash(true);
         window.setTimeout(() => {
             const next = hellCountRef.current + 1;
             if (next >= 4) {
                 hellCountRef.current = 0;
-                setHellModeCount(0);
                 game_start("HellMode");
             } else {
                 hellCountRef.current = next;
-                setHellModeCount(next);
                 setOniFlash(false);
             }
         }, 120);
@@ -181,8 +210,6 @@ const ReflecMino = (): JSX.Element => {
         }, [size, reload_page]
     )
 
-    const [playing, setPlaying] = useState<boolean>(false);
-    const [timer_enabled, setTimerEnabled] = useState<boolean>(false);
     const game_start = useCallback(
         (mode: Mode) => {
             setIsGenerating(true);
@@ -200,8 +227,25 @@ const ReflecMino = (): JSX.Element => {
             }, 0);
         }, [date, custom_puzzle_data]
     );
+    const game_load = useCallback(
+        (saveData: SaveData | undefined) => {
+            if (!saveData) return
+            setIsGenerating(true);
+            setPlayMode(saveData.mode);
+            window.setTimeout(() => {
+                setPuzzleData(
+                    custom_puzzle_data
+                        ? custom_puzzle_data
+                        : generate(saveData.mode, Number(saveData.date))
+                );
+                setPlaying(true);
+                setTimerEnabled(true);
+                setIsGenerating(false);
+                setOniFlash(false);
+            }, 0);
+        }, [date, custom_puzzle_data]
+    );
 
-    const [how2play_visible, setHow2PlayVisible] = useState<boolean>(false);
     const toggle_how2play = useCallback(
         () => {
             setHow2PlayVisible(!how2play_visible);
@@ -715,6 +759,7 @@ const ReflecMino = (): JSX.Element => {
                                     variant={"contained"}
                                     size={"large"}
                                     sx={{
+                                        display: saveData ? (format(date, "yyyyMMdd") === format(saveData.date, "yyyyMMdd") ? "none" : "inline-flex") : "inline-flex",
                                         width: theme.spacing(10),
                                         marginTop: theme.spacing(3),
                                         backgroundColor: "#ffffff",
@@ -725,6 +770,24 @@ const ReflecMino = (): JSX.Element => {
                                     onClick={() => game_start("NormalMode")}
                                 >
                                     {isGenerating ? "Generating..." : "Play"}
+                                </Button>
+                                <Button
+                                    disabled={isGenerating || playing || solved || how2play_visible || isBefore(date, new Date("1900-1-1")) || isAfter(date, new Date())}
+                                    variant={"contained"}
+                                    size={"large"}
+                                    sx={{
+                                        display: saveData ? (format(date, "yyyyMMdd") === format(saveData.date, "yyyyMMdd") ? "inline-flex" : "none") : "none",
+                                        width: theme.spacing(10),
+                                        marginTop: theme.spacing(3),
+                                        color: "#ff3838ff",
+                                        backgroundColor: "#ffffff",
+                                        "&:hover": {
+                                            backgroundColor: "#ffbdbdff",
+                                        }
+                                    }}
+                                    onClick={() => game_load(saveData)}
+                                >
+                                    {isGenerating ? "Generating..." : "Load"}
                                 </Button>
                                 <Button
                                     disabled={playing || solved || how2play_visible}
