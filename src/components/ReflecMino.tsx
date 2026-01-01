@@ -83,14 +83,14 @@ const ReflecMino = (): JSX.Element => {
                 case "NormalMode":
                     text = [
                         `⬛🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
-                        `🟧⬜🟦 https://reflec-oni-mino.github.io/`,
+                        `🟧⬜🟦 https://reflec-oni-mino.github.io/${format(date, "yyyyMMdd") === format(new Date(), "yyyyMMdd") ? "" : "?date=" + format(date, "yyyyMMdd")}`,
                         `⬛🟦⬛ Solved in ${document.getElementById("timer")?.textContent}`,
                     ].join("\n");
                     break;
                 case "HellMode":
                     text = [
                         `👿🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
-                        `🟧⬜🟦 https://reflec-oni-mino.github.io/`,
+                        `🟧⬜🟦 https://reflec-oni-mino.github.io/${format(date, "yyyyMMdd") === format(new Date(), "yyyyMMdd") ? "" : "?date=" + format(date, "yyyyMMdd")}`,
                         `👿🟦👿 Solved in ${document.getElementById("timer")?.textContent}`,
                     ].join("\n")
                     break;
@@ -114,14 +114,14 @@ const ReflecMino = (): JSX.Element => {
                 case "NormalMode":
                     text = [
                         `⬛🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
-                        `🟧⬜🟦 https://reflec-oni-mino.github.io/`,
+                        `🟧⬜🟦 https://reflec-oni-mino.github.io/${format(date, "yyyyMMdd") === format(new Date(), "yyyyMMdd") ? "" : "?date=" + format(date, "yyyyMMdd")}`,
                         `⬛🟦⬛ Resigned at ${document.getElementById("timer")?.textContent}🏳️`,
                     ].join("\n");
                     break;
                 case "HellMode":
                     text = [
                         `👿🟧👿 Reflec鬼Mino ${custom_puzzle_data ? "Custom" : format(date, "yyyy/MM/dd")}`,
-                        `🟧⬜🟦 https://reflec-oni-mino.github.io/`,
+                        `🟧⬜🟦 https://reflec-oni-mino.github.io/${format(date, "yyyyMMdd") === format(new Date(), "yyyyMMdd") ? "" : "?date=" + format(date, "yyyyMMdd")}`,
                         `👿🟦👿 Resigned at ${document.getElementById("timer")?.textContent}🏳️`,
                     ].join("\n")
                     break;
